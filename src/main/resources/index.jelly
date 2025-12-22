@@ -1,6 +1,4 @@
-<j:jelly xmlns:j="jelly:core" xmlns:l="/lib/layout" xmlns:t="/lib/hudson">
-    <j:raw><![CDATA[
-    <h1>Sedstart</h1>
-    <p>Sedstart Plugin index.jelly</p>
-  ]]></j:raw>
-</j:jelly>
+<?jelly escape-by-default='true'?>
+<div>
+    Sedstart Jenkins Plugin
+</div>
