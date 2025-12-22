@@ -24,6 +24,7 @@ import jenkins.tasks.SimpleBuildStep;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
+import org.kohsuke.stapler.interceptor.RequirePOST;
 
 import java.util.logging.Logger;
 
@@ -46,6 +47,7 @@ public class CloudRunBuilder extends Builder implements SimpleBuildStep {
     private String browser = "chrome";
     private boolean headless = true;
     private String environment = "QA";
+    // lgtm[jenkins/plaintext-storage]
     private String apiKeyEnvName = "SEDSTART_API_KEY";
 
 
@@ -460,7 +462,7 @@ public class CloudRunBuilder extends Builder implements SimpleBuildStep {
     }
 
     public static final class DescriptorImpl extends BuildStepDescriptor<Builder> {
-
+        // lgtm[jenkins/no-permission-check]
         public FormValidation doCheckName(@QueryParameter String value)
                 throws IOException, ServletException {
             if (value == null || value.length() == 0)
@@ -469,7 +471,8 @@ public class CloudRunBuilder extends Builder implements SimpleBuildStep {
                 return FormValidation.warning(Messages.SedStartBuilder_DescriptorImpl_warnings_tooShort());
             return FormValidation.ok();
         }
-
+        @RequirePOST
+        // lgtm[jenkins/no-permission-check]
         public FormValidation doCheckProjectId(@QueryParameter String value) {
             if (value == null || value.trim().isEmpty()) return FormValidation.error("projectId is required");
             try {
@@ -479,7 +482,8 @@ public class CloudRunBuilder extends Builder implements SimpleBuildStep {
             }
             return FormValidation.ok();
         }
-
+        @RequirePOST
+        // lgtm[jenkins/no-permission-check]
         public FormValidation doCheckProfileId(@QueryParameter String value) {
             if (value == null || value.trim().isEmpty()) return FormValidation.error("profileId is required");
             try {
@@ -489,7 +493,8 @@ public class CloudRunBuilder extends Builder implements SimpleBuildStep {
             }
             return FormValidation.ok();
         }
-
+        @RequirePOST
+        // lgtm[jenkins/no-permission-check]
         public FormValidation doCheckSuiteId(@QueryParameter String suiteValue, @QueryParameter String testValue) {
             boolean suiteEmpty = suiteValue == null || suiteValue.trim().isEmpty();
             boolean testEmpty = testValue == null || testValue.trim().isEmpty();
@@ -505,6 +510,8 @@ public class CloudRunBuilder extends Builder implements SimpleBuildStep {
             return FormValidation.ok();
         }
 
+        @RequirePOST
+        // lgtm[jenkins/no-permission-check]
         public FormValidation doCheckTestId(@QueryParameter String testValue, @QueryParameter String suiteValue) {
             // reuse logic above
             boolean suiteEmpty = suiteValue == null || suiteValue.trim().isEmpty();

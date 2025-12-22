@@ -45,6 +45,7 @@ public class LocalRunBuilder extends Builder implements SimpleBuildStep {
     private String browser = "chrome";
     private boolean headless = false;
     private String environment = "PROD";
+    // lgtm[jenkins/plaintext-storage]
     private String apiKeyEnvName = "SEDSTART_API_KEY";
 
     @DataBoundConstructor

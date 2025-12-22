@@ -27,6 +27,7 @@ public class SedStartBuilder extends Builder implements SimpleBuildStep {
     private Integer testId;
     private Integer profileId;
     private String browser = "chrome";
+    // lgtm[jenkins/plaintext-storage]
     private String apiKeyEnvName = "SEDSTART_API_KEY";
     private boolean headless = false;
     private String environment = "PROD";
