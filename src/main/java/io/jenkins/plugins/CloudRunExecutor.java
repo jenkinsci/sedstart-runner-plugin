@@ -6,7 +6,9 @@ import hudson.Launcher;
 import hudson.model.Run;
 import hudson.model.TaskListener;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -62,6 +64,17 @@ final class CloudRunExecutor {
         }
 
         listener.getLogger().println("[sedstart] Cloud run triggered successfully");
+
+        try (BufferedReader reader = new BufferedReader(
+                new InputStreamReader(conn.getInputStream(), StandardCharsets.UTF_8))) {
+
+            String line;
+            while ((line = reader.readLine()) != null) {
+                if (line.startsWith("data:")) {
+                    listener.getLogger().println("[sedstart] " + line.substring(5).trim());
+                }
+            }
+        }
     }
 
     private static void validate(Integer projectId, Integer suiteId, Integer testId, Integer profileId)

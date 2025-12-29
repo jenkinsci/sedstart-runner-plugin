@@ -11,10 +11,6 @@ This plugin allows you to run tests created on platform app.sedstart.com
 3. pass this name of environment variable to one of the inputs
 4. For rest of the input parameters you can copy from copy icon from sedstart Run Button
 
-## Issues
-
-Report issues and enhancements in the [Jenkins issue tracker](https://issues.jenkins.io/).
-
 ## Contributing
 
 Refer contributing section
