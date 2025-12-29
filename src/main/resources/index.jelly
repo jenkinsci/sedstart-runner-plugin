@@ -1,4 +1,17 @@
 <?jelly escape-by-default='true'?>
 <div>
-    Sedstart Jenkins Plugin
+    <h3>Sedstart Jenkins Plugin</h3>
+
+    <p>
+        This plugin allows you to run tests created on platform app.sedstart.com
+    </p>
+
+    <h3>Getting Started</h3>
+
+    <ol>
+       <li>Generate API Key for your project in sedstart platform under API Keys Section</li>
+        <li>Store this API Key as System Level Environment variable with any name say SEDSTART_API_KEY</li>
+        <li>Pass this name of environment variable to one of the inputs</li>
+        <li>For rest of the input parameters you can copy from copy icon from sedstart Run Button</li>
+    </ol>
 </div>

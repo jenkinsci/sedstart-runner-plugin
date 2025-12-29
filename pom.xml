@@ -12,7 +12,7 @@
 
     <groupId>io.jenkins.plugins</groupId>
     <artifactId>sedstart-runner</artifactId>
-    <version>${revision}${changelist}</version>
+    <version>${changelist}</version>
     <packaging>hpi</packaging>
 
     <name>Sedstart Runner Plugin</name>
@@ -32,18 +32,13 @@
     </scm>
 
     <properties>
-        <revision>1.0</revision>
         <changelist>999999-SNAPSHOT</changelist>
-
         <!-- https://www.jenkins.io/doc/developer/plugin-development/choosing-jenkins-baseline/ -->
         <jenkins.baseline>2.516</jenkins.baseline>
         <jenkins.version>${jenkins.baseline}.3</jenkins.version>
         <gitHubRepo>jenkinsci/${project.artifactId}-plugin</gitHubRepo>
-        <hpi.bundledArtifacts>jackson-annotations,jackson-core,jackson-databind</hpi.bundledArtifacts>
         <spotless.check.skip>false</spotless.check.skip>
         <ban-junit4-imports.skip>false</ban-junit4-imports.skip>
-        <hpi.strictBundledArtifacts>true</hpi.strictBundledArtifacts>
-        <hpi.bundledArtifacts></hpi.bundledArtifacts>
     </properties>
 
     <dependencyManagement>
