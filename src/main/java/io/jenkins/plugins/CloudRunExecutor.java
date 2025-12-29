@@ -5,14 +5,17 @@ import hudson.FilePath;
 import hudson.Launcher;
 import hudson.model.Run;
 import hudson.model.TaskListener;
-
+import hudson.ProxyConfiguration;
+import jenkins.model.Jenkins;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.net.HttpURLConnection;
-import java.net.URL;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 
 final class CloudRunExecutor {
 
@@ -30,7 +33,7 @@ final class CloudRunExecutor {
             boolean headless,
             String environment,
             String apiKeyEnvName
-    ) throws IOException {
+    ) throws IOException, InterruptedException {
 
         validate(projectId, suiteId, testId, profileId);
 
@@ -44,29 +47,36 @@ final class CloudRunExecutor {
                         ? "https://sedstart.sedinqa.com"
                         : "https://app.sedstart.com";
 
-        String endpoint = baseUrl + "/api/project/" + projectId + "/runCI";
-        listener.getLogger().println("[sedstart] Triggering Cloud run: " + endpoint);
+        if (!baseUrl.startsWith("https://")) {
+            throw new IOException("Only HTTPS endpoints are allowed");
+        }
 
-        HttpURLConnection conn = (HttpURLConnection) new URL(endpoint).openConnection();
-        conn.setRequestMethod("POST");
-        conn.setDoOutput(true);
-        conn.setRequestProperty("Authorization", "APIKey " + apiKey);
-        conn.setRequestProperty("Content-Type", "application/json");
+        URI uri = URI.create(baseUrl + "/api/project/" + projectId + "/runCI");
+        listener.getLogger().println("[sedstart] Triggering Cloud run: " + uri);
+
+        HttpClient client = createHttpClient();
 
         String body = buildJson(suiteId, testId, profileId, browser, headless);
-        try (OutputStream os = conn.getOutputStream()) {
-            os.write(body.getBytes(StandardCharsets.UTF_8));
+
+        HttpRequest request = HttpRequest.newBuilder(uri)
+                .timeout(Duration.ofMinutes(5))   // request timeout
+                .header("Authorization", "APIKey " + apiKey)
+                .header("Content-Type", "application/json")
+                .header("Accept", "text/event-stream")
+                .POST(HttpRequest.BodyPublishers.ofString(body, StandardCharsets.UTF_8))
+                .build();
+
+        HttpResponse<java.io.InputStream> response =
+                client.send(request, HttpResponse.BodyHandlers.ofInputStream());
+
+        if (response.statusCode() >= 400) {
+            throw new IOException("Cloud run failed with HTTP " + response.statusCode());
         }
 
-        int status = conn.getResponseCode();
-        if (status >= 400) {
-            throw new IOException("Cloud run failed with HTTP " + status);
-        }
-
-        listener.getLogger().println("[sedstart] Cloud run triggered successfully");
+        listener.getLogger().println("[sedstart] Streaming cloud execution logs…");
 
         try (BufferedReader reader = new BufferedReader(
-                new InputStreamReader(conn.getInputStream(), StandardCharsets.UTF_8))) {
+                new InputStreamReader(response.body(), StandardCharsets.UTF_8))) {
 
             String line;
             while ((line = reader.readLine()) != null) {
@@ -75,6 +85,13 @@ final class CloudRunExecutor {
                 }
             }
         }
+    }
+
+    private static HttpClient createHttpClient() {
+        HttpClient.Builder builder = ProxyConfiguration.newHttpClientBuilder()
+                .connectTimeout(Duration.ofSeconds(30));
+
+        return builder.build();
     }
 
     private static void validate(Integer projectId, Integer suiteId, Integer testId, Integer profileId)
