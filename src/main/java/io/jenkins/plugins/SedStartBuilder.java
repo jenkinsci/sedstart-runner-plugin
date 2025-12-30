@@ -8,29 +8,32 @@ import hudson.model.Run;
 import hudson.model.TaskListener;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.Builder;
+import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 import jenkins.tasks.SimpleBuildStep;
+import org.jenkinsci.Symbol;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
+import org.kohsuke.stapler.QueryParameter;
 
 import java.io.IOException;
 
 public class SedStartBuilder extends Builder implements SimpleBuildStep {
+
     public enum Mode { CLOUD, LOCAL }
 
     private final Mode mode;
     private final String name;
 
-    // local-run
     private Integer projectId;
     private Integer suiteId;
     private Integer testId;
     private Integer profileId;
     private String browser = "chrome";
-    // lgtm[jenkins/plaintext-storage]
-    private String apiKeyEnvName = "SEDSTART_API_KEY";
     private boolean headless = false;
     private String environment = "PROD";
+    // lgtm[jenkins/plaintext-storage]
+    private String apiKeyEnvName = "SEDSTART_API_KEY";
 
     @DataBoundConstructor
     public SedStartBuilder(Mode mode, String name) {
@@ -41,7 +44,6 @@ public class SedStartBuilder extends Builder implements SimpleBuildStep {
     public Mode getMode() { return mode; }
     public String getName() { return name; }
 
-    // getters + setters for local-run fields
     public Integer getProjectId() { return projectId; }
     @DataBoundSetter public void setProjectId(Integer projectId) { this.projectId = projectId; }
 
@@ -57,66 +59,136 @@ public class SedStartBuilder extends Builder implements SimpleBuildStep {
     public String getBrowser() { return browser; }
     @DataBoundSetter public void setBrowser(String browser) { this.browser = browser; }
 
-    public String getApiKeyEnvName() { return apiKeyEnvName; }
-    @DataBoundSetter public void setApiKeyEnvName(String apiKeyEnvName) { this.apiKeyEnvName = apiKeyEnvName; }
-
     public boolean isHeadless() { return headless; }
     @DataBoundSetter public void setHeadless(boolean headless) { this.headless = headless; }
 
     public String getEnvironment() { return environment; }
     @DataBoundSetter public void setEnvironment(String environment) { this.environment = environment; }
 
+    public String getApiKeyEnvName() { return apiKeyEnvName; }
+    @DataBoundSetter public void setApiKeyEnvName(String apiKeyEnvName) { this.apiKeyEnvName = apiKeyEnvName; }
+
     @Override
-    public void perform(Run<?, ?> run, FilePath workspace, EnvVars env, Launcher launcher, TaskListener listener)
-            throws InterruptedException, IOException {
+    public void perform(
+            Run<?, ?> run,
+            FilePath workspace,
+            EnvVars env,
+            Launcher launcher,
+            TaskListener listener
+    ) throws InterruptedException, IOException {
+
         if (mode == Mode.CLOUD) {
-            listener.getLogger().println("CloudRunBuilder behavior: " + (name == null ? "" : name));
-            CloudRunBuilder cloud = new CloudRunBuilder(name);
-
-            cloud.setProjectId(this.projectId);
-            cloud.setSuiteId(this.suiteId);
-            cloud.setTestId(this.testId);
-            cloud.setProfileId(this.profileId);
-            cloud.setBrowser(this.browser);
-            cloud.setHeadless(this.headless);
-            cloud.setEnvironment(this.environment);
-            cloud.setApiKeyEnvName(this.apiKeyEnvName);
-
-            // delegate synchronously to the CloudRunBuilder implementation
-            cloud.perform(run, workspace, env, launcher, listener);
-            return;
+            new CloudRunExecutor().execute(
+                    run, workspace, env, launcher, listener,
+                    projectId, suiteId, testId, profileId,
+                    browser, headless, environment, apiKeyEnvName
+            );
+        } else {
+            new LocalRunExecutor().execute(
+                    run, workspace, env, launcher, listener,
+                    projectId, suiteId, testId, profileId,
+                    browser, headless, environment, apiKeyEnvName
+            );
         }
-
-        // LOCAL mode: validate and run CLI (same logic you already have)
-        if (projectId == null) throw new IOException("projectId is required");
-        if ((suiteId == null && testId == null) || (suiteId != null && testId != null)) {
-            throw new IOException("Exactly one of suiteId or testId must be provided");
-        }
-        if (profileId == null) throw new IOException("profileId is required");
-
-        listener.getLogger().println("[sedstart] Running Local mode for project " + projectId);
-        LocalRunBuilder delegate = new LocalRunBuilder(name);
-
-        delegate.setProjectId(projectId);
-        delegate.setSuiteId(suiteId);
-        delegate.setTestId(testId);
-        delegate.setProfileId(profileId);
-        delegate.setBrowser(browser);
-        delegate.setHeadless(headless);
-        delegate.setEnvironment(environment);
-        delegate.setApiKeyEnvName(apiKeyEnvName);
-        delegate.perform(run, workspace, env, launcher, listener);
     }
 
     @Extension
+    @Symbol("sedStart")
     public static final class DescriptorImpl extends BuildStepDescriptor<Builder> {
-        @Override public boolean isApplicable(Class jobType) { return true; }
-        @Override public String getDisplayName() { return "SedStart Runner"; }
+
+        @Override
+        public boolean isApplicable(Class jobType) {
+            return true;
+        }
+
+        @Override
+        public String getDisplayName() {
+            return "SedStart Runner";
+        }
+
         public ListBoxModel doFillModeItems() {
             ListBoxModel items = new ListBoxModel();
             items.add("Local", "LOCAL");
             items.add("Cloud", "CLOUD");
             return items;
         }
+
+        /* ------------------
+         * Field validations
+         * ------------------ */
+
+        public FormValidation doCheckProjectId(@QueryParameter String value) {
+            return requirePositiveInteger(value, "Project ID");
+        }
+
+        public FormValidation doCheckProfileId(@QueryParameter String value) {
+            return requirePositiveInteger(value, "Profile ID");
+        }
+
+        public FormValidation doCheckSuiteId(
+                @QueryParameter String value,
+                @QueryParameter("testId") String testId
+        ) {
+            return xorNumeric(value, testId, "Suite ID", "Test ID");
+        }
+
+        public FormValidation doCheckTestId(
+                @QueryParameter String value,
+                @QueryParameter("suiteId") String suiteId
+        ) {
+            return xorNumeric(value, suiteId, "Test ID", "Suite ID");
+        }
+
+        /* ------------------
+         * Helpers
+         * ------------------ */
+
+        private static FormValidation requirePositiveInteger(String value, String fieldName) {
+            if (value == null || value.trim().isEmpty()) {
+                return FormValidation.error(fieldName + " is required");
+            }
+            try {
+                int v = Integer.parseInt(value.trim());
+                if (v <= 0) {
+                    return FormValidation.error(fieldName + " must be a positive number");
+                }
+            } catch (NumberFormatException e) {
+                return FormValidation.error(fieldName + " must be numeric");
+            }
+            return FormValidation.ok();
+        }
+
+        private static FormValidation xorNumeric(
+                String primary,
+                String other,
+                String primaryName,
+                String otherName
+        ) {
+            boolean primaryEmpty = primary == null || primary.trim().isEmpty();
+            boolean otherEmpty = other == null || other.trim().isEmpty();
+
+            if (primaryEmpty && otherEmpty) {
+                return FormValidation.error(
+                        "Provide either " + primaryName + " or " + otherName
+                );
+            }
+            if (!primaryEmpty && !otherEmpty) {
+                return FormValidation.error(
+                        "Provide only one of " + primaryName + " or " + otherName
+                );
+            }
+            if (!primaryEmpty) {
+                try {
+                    int v = Integer.parseInt(primary.trim());
+                    if (v <= 0) {
+                        return FormValidation.error(primaryName + " must be a positive number");
+                    }
+                } catch (NumberFormatException e) {
+                    return FormValidation.error(primaryName + " must be numeric");
+                }
+            }
+            return FormValidation.ok();
+        }
     }
+
 }
