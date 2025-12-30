@@ -29,14 +29,14 @@
             </f:entry>
 
             <f:entry title="Suite ID" field="suiteId">
-                <f:textbox/>
+                <f:textbox checkDependsOn="testId"/>
                 <f:help>
                     Provide either Suite ID or Test ID (not both).
                 </f:help>
             </f:entry>
 
             <f:entry title="Test ID" field="testId">
-                <f:textbox/>
+                <f:textbox checkDependsOn="suiteId"/>
             </f:entry>
 
             <f:entry title="Profile ID" field="profileId">
