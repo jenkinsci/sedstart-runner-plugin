@@ -11,6 +11,7 @@ import hudson.tasks.Builder;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
 import jenkins.tasks.SimpleBuildStep;
+import org.jenkinsci.Symbol;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
@@ -92,6 +93,7 @@ public class SedStartBuilder extends Builder implements SimpleBuildStep {
     }
 
     @Extension
+    @Symbol("sedStart")
     public static final class DescriptorImpl extends BuildStepDescriptor<Builder> {
 
         @Override
@@ -106,8 +108,8 @@ public class SedStartBuilder extends Builder implements SimpleBuildStep {
 
         public ListBoxModel doFillModeItems() {
             ListBoxModel items = new ListBoxModel();
-            items.add("Cloud", "CLOUD");
             items.add("Local", "LOCAL");
+            items.add("Cloud", "CLOUD");
             return items;
         }
 
