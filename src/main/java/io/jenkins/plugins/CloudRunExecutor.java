@@ -78,12 +78,37 @@ final class CloudRunExecutor {
         try (BufferedReader reader = new BufferedReader(
                 new InputStreamReader(response.body(), StandardCharsets.UTF_8))) {
 
+            SedStartSseRenderer renderer = new SedStartSseRenderer(listener);
+
             String line;
+            StringBuilder eventData = new StringBuilder();
+
             while ((line = reader.readLine()) != null) {
+
+                // Empty line = end of one SSE event
+                if (line.isEmpty()) {
+                    if (eventData.length() > 0) {
+                        renderer.onEvent(eventData.toString());
+                        eventData.setLength(0);
+                    }
+                    continue;
+                }
+
+                // SSE payload lines
                 if (line.startsWith("data:")) {
-                    listener.getLogger().println("[sedstart] " + line.substring(5).trim());
+                    if (eventData.length() > 0) {
+                        eventData.append(' ');
+                    }
+                    eventData.append(line.substring(5).trim());
                 }
             }
+
+            // Final flush (in case stream ends without blank line)
+            if (eventData.length() > 0) {
+                renderer.onEvent(eventData.toString());
+            }
+
+            renderer.onComplete();
         }
     }
 
