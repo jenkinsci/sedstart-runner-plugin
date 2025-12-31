@@ -4,17 +4,20 @@ import hudson.EnvVars;
 import hudson.Extension;
 import hudson.FilePath;
 import hudson.Launcher;
+import hudson.model.Item;
 import hudson.model.Run;
 import hudson.model.TaskListener;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.Builder;
 import hudson.util.FormValidation;
 import hudson.util.ListBoxModel;
+import jenkins.model.Jenkins;
 import jenkins.tasks.SimpleBuildStep;
 import org.jenkinsci.Symbol;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.QueryParameter;
+import org.kohsuke.stapler.interceptor.RequirePOST;
 
 import java.io.IOException;
 
@@ -117,25 +120,33 @@ public class SedStartBuilder extends Builder implements SimpleBuildStep {
          * Field validations
          * ------------------ */
 
+        @RequirePOST
         public FormValidation doCheckProjectId(@QueryParameter String value) {
+            Jenkins.get().checkPermission(Item.CONFIGURE);
             return requirePositiveInteger(value, "Project ID");
         }
 
+        @RequirePOST
         public FormValidation doCheckProfileId(@QueryParameter String value) {
+            Jenkins.get().checkPermission(Item.CONFIGURE);
             return requirePositiveInteger(value, "Profile ID");
         }
 
+        @RequirePOST
         public FormValidation doCheckSuiteId(
                 @QueryParameter String value,
                 @QueryParameter("testId") String testId
         ) {
+            Jenkins.get().checkPermission(Item.CONFIGURE);
             return xorNumeric(value, testId, "Suite ID", "Test ID");
         }
 
+        @RequirePOST
         public FormValidation doCheckTestId(
                 @QueryParameter String value,
                 @QueryParameter("suiteId") String suiteId
         ) {
+            Jenkins.get().checkPermission(Item.CONFIGURE);
             return xorNumeric(value, suiteId, "Test ID", "Suite ID");
         }
 
