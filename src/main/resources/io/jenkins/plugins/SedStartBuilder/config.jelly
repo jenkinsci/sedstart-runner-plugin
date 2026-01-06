@@ -13,34 +13,23 @@
             <f:textbox/>
         </f:entry>
 
-        <f:advanced>
-            <f:entry title="API Key Environment Variable" field="apiKeyEnvName">
-                <f:textbox default="SEDSTART_API_KEY"/>
-                <f:help>
-                    Name of the environment variable containing the SedStart API key.
-                </f:help>
-            </f:entry>
-        </f:advanced>
-
         <f:section title="SedStart Configuration">
 
             <f:entry title="Project ID" field="projectId">
-                <f:textbox/>
+                <f:number clazz="positive-number required"/>
             </f:entry>
 
             <f:entry title="Suite ID" field="suiteId">
-                <f:textbox checkDependsOn="testId"/>
-                <f:help>
-                    Provide either Suite ID or Test ID (not both).
-                </f:help>
+                <f:number clazz="positive-number" checkDependsOn="testId"/>
+
             </f:entry>
 
             <f:entry title="Test ID" field="testId">
-                <f:textbox checkDependsOn="suiteId"/>
+                <f:number clazz="positive-number" checkDependsOn="suiteId"/>
             </f:entry>
 
             <f:entry title="Profile ID" field="profileId">
-                <f:textbox/>
+                <f:number clazz="positive-number required"/>
             </f:entry>
 
             <f:entry title="Browser" field="browser">
@@ -53,9 +42,6 @@
 
             <f:entry title="Environment" field="environment">
                 <f:textbox default="PROD"/>
-                <f:help>
-                    PROD, QA, or a full base URL (https://…)
-                </f:help>
             </f:entry>
 
         </f:section>

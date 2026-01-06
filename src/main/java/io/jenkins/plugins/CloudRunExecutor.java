@@ -6,7 +6,6 @@ import hudson.Launcher;
 import hudson.model.Run;
 import hudson.model.TaskListener;
 import hudson.ProxyConfiguration;
-import jenkins.model.Jenkins;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -18,6 +17,8 @@ import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 
 final class CloudRunExecutor {
+
+    private static final String API_KEY_ENV = "SEDSTART_API_KEY";
 
     void execute(
             Run<?, ?> run,
@@ -31,15 +32,16 @@ final class CloudRunExecutor {
             Integer profileId,
             String browser,
             boolean headless,
-            String environment,
-            String apiKeyEnvName
+            String environment
     ) throws IOException, InterruptedException {
 
         validate(projectId, suiteId, testId, profileId);
 
-        String apiKey = env.get(apiKeyEnvName);
+        String apiKey = env.get(API_KEY_ENV);
         if (apiKey == null || apiKey.isEmpty()) {
-            throw new IOException(apiKeyEnvName + " environment variable is required");
+            throw new IOException(
+                    "SEDSTART_API_KEY is not set. Use Jenkins credentials binding."
+            );
         }
 
         String baseUrl =

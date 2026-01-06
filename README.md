@@ -33,13 +33,14 @@ It supports:
 
 ### 2. Store API Key securely in Jenkins (recommended)
 
-Instead of using a plain environment variable, it is **recommended** to store the API key
-using Jenkins Credentials.
+Store the API key using Jenkins Credentials.
 
-1. Go to **Manage Jenkins → System**
-2. Add a **Environmental Variable**
+1. Go to **Manage Jenkins → Credentials**
+2. Add a credential of type **secret text**
 3. Paste your SedStart API key
-4. ex name: (e.g. `SEDSTART-AP-KEY`)
+4. Give it an id
+5. In Configuration, **Environment → Use secret text**
+6. Bind it with variable name **SEDSTART_API_KEY**
 
 ---
 
