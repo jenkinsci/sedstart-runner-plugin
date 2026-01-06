@@ -36,7 +36,6 @@ public class SedStartBuilder extends Builder implements SimpleBuildStep {
     private boolean headless = false;
     private String environment = "PROD";
     // lgtm[jenkins/plaintext-storage]
-    private String apiKeyEnvName = "SEDSTART_API_KEY";
 
     @DataBoundConstructor
     public SedStartBuilder(Mode mode, String name) {
@@ -68,8 +67,6 @@ public class SedStartBuilder extends Builder implements SimpleBuildStep {
     public String getEnvironment() { return environment; }
     @DataBoundSetter public void setEnvironment(String environment) { this.environment = environment; }
 
-    public String getApiKeyEnvName() { return apiKeyEnvName; }
-    @DataBoundSetter public void setApiKeyEnvName(String apiKeyEnvName) { this.apiKeyEnvName = apiKeyEnvName; }
 
     @Override
     public void perform(
@@ -84,13 +81,13 @@ public class SedStartBuilder extends Builder implements SimpleBuildStep {
             new CloudRunExecutor().execute(
                     run, workspace, env, launcher, listener,
                     projectId, suiteId, testId, profileId,
-                    browser, headless, environment, apiKeyEnvName
+                    browser, headless, environment
             );
         } else {
             new LocalRunExecutor().execute(
                     run, workspace, env, launcher, listener,
                     projectId, suiteId, testId, profileId,
-                    browser, headless, environment, apiKeyEnvName
+                    browser, headless, environment
             );
         }
     }

@@ -12,6 +12,8 @@ import java.util.List;
 
 final class LocalRunExecutor {
 
+    private static final String API_KEY_ENV = "SEDSTART_API_KEY";
+
     void execute(
             Run<?, ?> run,
             FilePath workspace,
@@ -24,45 +26,40 @@ final class LocalRunExecutor {
             Integer profileId,
             String browser,
             boolean headless,
-            String environment,
-            String apiKeyEnvName
+            String environment
     ) throws IOException, InterruptedException {
 
         validate(projectId, suiteId, testId, profileId);
 
-        String apiKey = env.get(apiKeyEnvName);
+        String apiKey = env.get(API_KEY_ENV);
         if (apiKey == null || apiKey.isEmpty()) {
-            throw new IOException(apiKeyEnvName + " environment variable is required");
+            throw new IOException(
+                    "SEDSTART_API_KEY is not set. Use Jenkins credentials binding."
+            );
         }
-
         List<String> cmd = new ArrayList<>();
 
         cmd.add("sedstart");
         cmd.add("run");
 
-        // API key
         cmd.add("--key");
         cmd.add(apiKey);
 
-        // API URL (based on environment)
         cmd.add("--url");
         cmd.add(resolveApiUrl(environment));
 
-        // Project
         cmd.add("--project");
         cmd.add(projectId.toString());
 
-        // profile id flag
         cmd.add("--data");
         cmd.add(profileId.toString());
 
-        // Browser
         if (browser != null && !browser.isEmpty()) {
             cmd.add("--browser");
             cmd.add(browser);
         }
 
-        // Test or suite
+
         if (testId != null) {
             cmd.add("--test");
             cmd.add(testId.toString());

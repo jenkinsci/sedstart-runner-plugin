@@ -13,10 +13,6 @@
             <f:textbox/>
         </f:entry>
 
-        <f:entry title="API Key Environment Variable" field="apiKeyEnvName">
-            <f:textbox default="SEDSTART_API_KEY"/>
-        </f:entry>
-
         <f:section title="SedStart Configuration">
 
             <f:entry title="Project ID" field="projectId">
