@@ -48,11 +48,12 @@ final class LocalRunExecutor {
         cmd.add("--url");
         cmd.add(resolveApiUrl(environment));
 
-        // Project + profile
+        // Project
         cmd.add("--project");
         cmd.add(projectId.toString());
 
-        cmd.add("--data"); // profile id flag
+        // profile id flag
+        cmd.add("--data");
         cmd.add(profileId.toString());
 
         // Browser
@@ -60,11 +61,6 @@ final class LocalRunExecutor {
             cmd.add("--browser");
             cmd.add(browser);
         }
-
-        // Headless
-//        if (headless) {
-//            cmd.add("--headless");
-//        }
 
         // Test or suite
         if (testId != null) {
@@ -74,10 +70,6 @@ final class LocalRunExecutor {
             cmd.add("--suite");
             cmd.add(suiteId.toString());
         }
-
-//        listener.getLogger().println(
-//                "[sedstart] Running local CLI: " + String.join(" ", maskApiKey(cmd))
-//        );
 
         Launcher.ProcStarter ps = launcher.launch();
         ps.cmds(cmd);
@@ -98,19 +90,6 @@ final class LocalRunExecutor {
         return "https://app.sedstart.com/api";
     }
 
-    private static List<String> maskApiKey(List<String> cmd) {
-        List<String> masked = new ArrayList<>(cmd.size());
-        for (int i = 0; i < cmd.size(); i++) {
-            if ("--key".equals(cmd.get(i)) && i + 1 < cmd.size()) {
-                masked.add("--key");
-                masked.add("********");
-                i++;
-            } else {
-                masked.add(cmd.get(i));
-            }
-        }
-        return masked;
-    }
 
     private static void validate(Integer projectId, Integer suiteId, Integer testId, Integer profileId)
             throws IOException {
