@@ -5,7 +5,6 @@ import hudson.FilePath;
 import hudson.Launcher;
 import hudson.model.Run;
 import hudson.model.TaskListener;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -26,16 +25,14 @@ final class LocalRunExecutor {
             Integer profileId,
             String browser,
             boolean headless,
-            String environment
-    ) throws IOException, InterruptedException {
+            String environment)
+            throws IOException, InterruptedException {
 
         validate(projectId, suiteId, testId, profileId);
 
         String apiKey = env.get(API_KEY_ENV);
         if (apiKey == null || apiKey.isEmpty()) {
-            throw new IOException(
-                    "SEDSTART_API_KEY is not set. Use Jenkins credentials binding."
-            );
+            throw new IOException("SEDSTART_API_KEY is not set. Use Jenkins credentials binding.");
         }
         List<String> cmd = new ArrayList<>();
 
@@ -58,7 +55,6 @@ final class LocalRunExecutor {
             cmd.add("--browser");
             cmd.add(browser);
         }
-
 
         if (testId != null) {
             cmd.add("--test");
@@ -86,7 +82,6 @@ final class LocalRunExecutor {
         }
         return "https://app.sedstart.com/api";
     }
-
 
     private static void validate(Integer projectId, Integer suiteId, Integer testId, Integer profileId)
             throws IOException {

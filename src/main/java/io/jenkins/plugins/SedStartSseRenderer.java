@@ -38,9 +38,7 @@ final class SedStartSseRenderer {
         String name = test.path("name").asText("<unnamed>");
         String status = test.path("status").asText("UNKNOWN");
 
-        listener.getLogger().println(
-                "🧪 Test: " + name + " — " + status
-        );
+        listener.getLogger().println("🧪 Test: " + name + " — " + status);
 
         JsonNode items = test.path("items");
         if (items.isArray()) {
@@ -56,9 +54,7 @@ final class SedStartSseRenderer {
         String name = step.path("name").asText("TestStep");
         String status = step.path("status").asText("UNKNOWN");
 
-        listener.getLogger().println(
-                "  • " + name + " — " + status
-        );
+        listener.getLogger().println("  • " + name + " — " + status);
 
         JsonNode stepItems = step.path("items");
         if (stepItems.isArray()) {
@@ -72,9 +68,7 @@ final class SedStartSseRenderer {
         String name = item.path("name").asText("StepItem");
         String status = item.path("status").asText("UNKNOWN");
 
-        listener.getLogger().println(
-                "    - " + name + " — " + status
-        );
+        listener.getLogger().println("    - " + name + " — " + status);
 
         JsonNode actions = item.path("items");
         if (actions.isArray()) {
@@ -88,9 +82,7 @@ final class SedStartSseRenderer {
         String name = action.path("name").asText("Action");
         String status = action.path("status").asText("UNKNOWN");
 
-        listener.getLogger().println(
-                "      → " + name + " — " + status
-        );
+        listener.getLogger().println("      → " + name + " — " + status);
     }
 
     private void renderRun(JsonNode run) {
@@ -119,10 +111,14 @@ final class SedStartSseRenderer {
 
     private static String icon(String status) {
         switch (status.toUpperCase()) {
-            case "PASS": return "✅";
-            case "FAIL": return "❌";
-            case "IN_PROGRESS": return "⏳";
-            default: return "ℹ️";
+            case "PASS":
+                return "✅";
+            case "FAIL":
+                return "❌";
+            case "IN_PROGRESS":
+                return "⏳";
+            default:
+                return "ℹ️";
         }
     }
 }

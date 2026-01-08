@@ -3,9 +3,9 @@ package io.jenkins.plugins;
 import hudson.EnvVars;
 import hudson.FilePath;
 import hudson.Launcher;
+import hudson.ProxyConfiguration;
 import hudson.model.Run;
 import hudson.model.TaskListener;
-import hudson.ProxyConfiguration;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -32,22 +32,18 @@ final class CloudRunExecutor {
             Integer profileId,
             String browser,
             boolean headless,
-            String environment
-    ) throws IOException, InterruptedException {
+            String environment)
+            throws IOException, InterruptedException {
 
         validate(projectId, suiteId, testId, profileId);
 
         String apiKey = env.get(API_KEY_ENV);
         if (apiKey == null || apiKey.isEmpty()) {
-            throw new IOException(
-                    "SEDSTART_API_KEY is not set. Use Jenkins credentials binding."
-            );
+            throw new IOException("SEDSTART_API_KEY is not set. Use Jenkins credentials binding.");
         }
 
         String baseUrl =
-                "QA".equalsIgnoreCase(environment)
-                        ? "https://sedstart.sedinqa.com"
-                        : "https://app.sedstart.com";
+                "QA".equalsIgnoreCase(environment) ? "https://sedstart.sedinqa.com" : "https://app.sedstart.com";
 
         if (!baseUrl.startsWith("https://")) {
             throw new IOException("Only HTTPS endpoints are allowed");
@@ -61,15 +57,14 @@ final class CloudRunExecutor {
         String body = buildJson(suiteId, testId, profileId, browser, headless);
 
         HttpRequest request = HttpRequest.newBuilder(uri)
-                .timeout(Duration.ofMinutes(5))   // request timeout
+                .timeout(Duration.ofMinutes(5)) // request timeout
                 .header("Authorization", "APIKey " + apiKey)
                 .header("Content-Type", "application/json")
                 .header("Accept", "text/event-stream")
                 .POST(HttpRequest.BodyPublishers.ofString(body, StandardCharsets.UTF_8))
                 .build();
 
-        HttpResponse<java.io.InputStream> response =
-                client.send(request, HttpResponse.BodyHandlers.ofInputStream());
+        HttpResponse<java.io.InputStream> response = client.send(request, HttpResponse.BodyHandlers.ofInputStream());
 
         if (response.statusCode() >= 400) {
             throw new IOException("Cloud run failed with HTTP " + response.statusCode());
@@ -77,8 +72,8 @@ final class CloudRunExecutor {
 
         listener.getLogger().println("[sedstart] Streaming cloud execution logs…");
 
-        try (BufferedReader reader = new BufferedReader(
-                new InputStreamReader(response.body(), StandardCharsets.UTF_8))) {
+        try (BufferedReader reader =
+                new BufferedReader(new InputStreamReader(response.body(), StandardCharsets.UTF_8))) {
 
             SedStartSseRenderer renderer = new SedStartSseRenderer(listener);
 
@@ -115,8 +110,7 @@ final class CloudRunExecutor {
     }
 
     private static HttpClient createHttpClient() {
-        HttpClient.Builder builder = ProxyConfiguration.newHttpClientBuilder()
-                .connectTimeout(Duration.ofSeconds(30));
+        HttpClient.Builder builder = ProxyConfiguration.newHttpClientBuilder().connectTimeout(Duration.ofSeconds(30));
 
         return builder.build();
     }
@@ -132,16 +126,9 @@ final class CloudRunExecutor {
     }
 
     private static String buildJson(
-            Integer suiteId,
-            Integer testId,
-            Integer profileId,
-            String browser,
-            boolean headless
-    ) {
+            Integer suiteId, Integer testId, Integer profileId, String browser, boolean headless) {
         return "{"
-                + (suiteId != null
-                ? "\"suite_id\":" + suiteId + ","
-                : "\"test_id\":" + testId + ",")
+                + (suiteId != null ? "\"suite_id\":" + suiteId + "," : "\"test_id\":" + testId + ",")
                 + "\"profile_id\":" + profileId + ","
                 + "\"browser\":\"" + browser + "\","
                 + "\"headless\":" + headless
