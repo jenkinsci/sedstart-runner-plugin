@@ -52,7 +52,7 @@ Store the API key using Jenkins Credentials.
     - Project ID
     - Test ID or Suite ID
     - Profile ID
-4. Provide the name of the environment variable that will contain the API key
+4. Provide the name of the environment variable that will contain the API key, Ideally Configured in Environment variables sections through secrets.
 
 ---
 
