@@ -32,6 +32,9 @@ final class LocalRunExecutor {
             String environment
     ) throws IOException, InterruptedException {
 
+        log(listener, "Starting local execution");
+
+        log(listener, "Validating inputs");
         validate(projectId, suiteId, testId, profileId);
 
         String apiKey = env.get(API_KEY_ENV);
@@ -42,26 +45,37 @@ final class LocalRunExecutor {
         // -----------------------------
         // Prepare .sedstart directory
         // -----------------------------
+        log(listener, "Preparing .sedstart directory");
         FilePath sedstartDir = workspace.child(DIR_NAME);
         sedstartDir.mkdirs();
 
-        FilePath binary = sedstartDir.child(detectOs(launcher).equals("windows") ? "sedstart.exe" : BIN_NAME);
+        String os = detectOs(launcher, listener);
+        String arch = detectArch(launcher, listener);
+
+        log(listener, "Platform resolved: " + os + " / " + arch);
+
+        FilePath binary = sedstartDir.child(os.equals("windows") ? "sedstart.exe" : BIN_NAME);
         FilePath envFile = sedstartDir.child("default.env");
 
         if (!envFile.exists()) {
+            log(listener, "Creating default.env");
             envFile.touch(0);
         }
 
         if (!binary.exists()) {
-            downloadBinary(binary, launcher, environment, listener);
-            chmodIfNeeded(binary, launcher);
+            log(listener, "sedstart binary not found, downloading");
+            downloadBinary(binary, launcher, environment, os, arch, listener);
+            chmodIfNeeded(binary, launcher, os, listener);
+        } else {
+            log(listener, "sedstart binary already present, reusing");
         }
 
         // -----------------------------
         // Build command
         // -----------------------------
-        List<String> cmd = new ArrayList<>();
+        log(listener, "Building sedstart command");
 
+        List<String> cmd = new ArrayList<>();
         cmd.add(binary.getRemote());
         cmd.add("run");
 
@@ -98,6 +112,8 @@ final class LocalRunExecutor {
         // -----------------------------
         // Execute on agent
         // -----------------------------
+        log(listener, "Executing sedstart CLI");
+
         Launcher.ProcStarter ps = launcher.launch();
         ps.cmds(cmd);
         ps.envs(env);
@@ -106,6 +122,8 @@ final class LocalRunExecutor {
         ps.stderr(listener.getLogger());
 
         int exit = ps.join();
+        log(listener, "sedstart finished with exit code " + exit);
+
         if (exit != 0) {
             throw new IOException("sedstart CLI exited with code " + exit);
         }
@@ -117,21 +135,19 @@ final class LocalRunExecutor {
             FilePath target,
             Launcher launcher,
             String environment,
+            String os,
+            String arch,
             TaskListener listener
     ) throws IOException, InterruptedException {
 
-        String os = detectOs(launcher);
-        String arch = detectArch(launcher);
-
         String platform = resolvePlatform(os, arch);
         String baseUrl = resolveCliBaseUrl(environment);
-
         String url = baseUrl + "/" + platform + "/sedstart";
 
-        listener.getLogger().println("Downloading sedstart CLI from: " + url);
+        log(listener, "Downloading sedstart from: " + url);
 
         List<String> cmd = new ArrayList<>();
-        if (os.contains("win")) {
+        if (os.equals("windows")) {
             cmd.add("powershell");
             cmd.add("-Command");
             cmd.add("Invoke-WebRequest -Uri '" + url + "' -OutFile '" + target.getRemote() + "'");
@@ -147,22 +163,31 @@ final class LocalRunExecutor {
         if (exit != 0) {
             throw new IOException("Failed to download sedstart CLI");
         }
+
+        log(listener, "Download completed");
     }
 
-    private static void chmodIfNeeded(FilePath binary, Launcher launcher)
-            throws IOException, InterruptedException {
+    private static void chmodIfNeeded(
+            FilePath binary,
+            Launcher launcher,
+            String os,
+            TaskListener listener
+    ) throws IOException, InterruptedException {
 
-        if (detectOs(launcher).equals("windows")) {
+        if (os.equals("windows")) {
             return;
         }
 
+        log(listener, "Making sedstart executable");
         launcher.launch()
                 .cmds("chmod", "+x", binary.getRemote())
                 .join();
     }
 
+    private static String detectOs(Launcher launcher, TaskListener listener)
+            throws IOException, InterruptedException {
 
-    private static String detectOs(Launcher launcher) throws IOException, InterruptedException {
+        log(listener, "Detecting OS");
         if (!launcher.isUnix()) {
             return "windows";
         }
@@ -180,9 +205,12 @@ final class LocalRunExecutor {
         throw new IOException("Unsupported OS: " + os);
     }
 
-    private static String detectArch(Launcher launcher) throws IOException, InterruptedException {
+    private static String detectArch(Launcher launcher, TaskListener listener)
+            throws IOException, InterruptedException {
+
+        log(listener, "Detecting architecture");
         if (!launcher.isUnix()) {
-            return "amd64"; // windows default, refine if needed
+            return "amd64";
         }
 
         ByteArrayOutputStream out = new ByteArrayOutputStream();
@@ -216,13 +244,13 @@ final class LocalRunExecutor {
     private static String resolvePlatform(String os, String arch) throws IOException {
 
         if (os.contains("mac")) {
-            return arch.contains("aarch64") || arch.contains("arm")
+            return arch.contains("arm")
                     ? "cli_darwin_arm64_v8.0"
                     : "cli_darwin_amd64_v1";
         }
 
         if (os.contains("linux")) {
-            return arch.contains("aarch64") || arch.contains("arm")
+            return arch.contains("arm")
                     ? "cli_linux_arm64_v8.0"
                     : "cli_linux_amd64_v1";
         }
@@ -252,5 +280,9 @@ final class LocalRunExecutor {
         if ((suiteId == null && testId == null) || (suiteId != null && testId != null)) {
             throw new IOException("Provide exactly one of suiteId or testId");
         }
+    }
+
+    private static void log(TaskListener listener, String msg) {
+        listener.getLogger().println("[sedstart] " + msg);
     }
 }
