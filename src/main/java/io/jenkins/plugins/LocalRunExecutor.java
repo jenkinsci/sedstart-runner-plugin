@@ -76,6 +76,35 @@ final class LocalRunExecutor {
         log(listener, "Building sedstart command");
 
         List<String> cmd = new ArrayList<>();
+
+        boolean addHeadlessFlag = false;
+
+        // -----------------------------
+        // Headless decision
+        // -----------------------------
+        if (headless) {
+            // Headless mode: all OS, no xvfb
+            addHeadlessFlag = true;
+            log(listener, "Headless enabled → running with -q");
+        } else {
+            // Headed mode
+            log(listener, "Headless disabled → running headed");
+
+            if (os.equals("linux")) {
+                if (hasDisplay(env)) {
+                    log(listener, "DISPLAY present → running headed without xvfb");
+                } else if (hasXvfb(launcher)) {
+                    cmd.add("xvfb-run");
+                    cmd.add("-a");
+                    log(listener, "No DISPLAY → using xvfb-run for headed execution");
+                } else {
+                    throw new IOException(
+                            "Cannot run headed mode on Linux without DISPLAY and without xvfb installed"
+                    );
+                }
+            }
+        }
+
         cmd.add(binary.getRemote());
         cmd.add("run");
 
@@ -94,7 +123,7 @@ final class LocalRunExecutor {
         cmd.add("-b");
         cmd.add(browser);
 
-        if (headless) {
+        if (addHeadlessFlag) {
             cmd.add("-q");
         }
 
@@ -239,6 +268,18 @@ final class LocalRunExecutor {
         return "QA".equalsIgnoreCase(env)
                 ? "https://sedstart.sedinqa.com/api"
                 : "https://app.sedstart.com/api";
+    }
+
+    private static boolean hasDisplay(EnvVars env) {
+        String display = env.get("DISPLAY");
+        return display != null && !display.isBlank();
+    }
+
+    private static boolean hasXvfb(Launcher launcher) throws IOException, InterruptedException {
+        int exit = launcher.launch()
+                .cmds("which", "xvfb-run")
+                .join();
+        return exit == 0;
     }
 
     private static String resolvePlatform(String os, String arch) throws IOException {
