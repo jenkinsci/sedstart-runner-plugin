@@ -5,9 +5,9 @@ import hudson.FilePath;
 import hudson.Launcher;
 import hudson.model.Run;
 import hudson.model.TaskListener;
-
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -29,8 +29,8 @@ final class LocalRunExecutor {
             Integer profileId,
             String browser,
             boolean headless,
-            String environment
-    ) throws IOException, InterruptedException {
+            String environment)
+            throws IOException, InterruptedException {
 
         log(listener, "Starting local execution");
 
@@ -102,8 +102,7 @@ final class LocalRunExecutor {
                         log(listener, "DISPLAY set and xvfb present → using xvfb-run for headed execution");
                     } else {
                         throw new IOException(
-                                "Cannot run headed mode on Linux with DISPLAY set but xvfb is not available"
-                        );
+                                "Cannot run headed mode on Linux with DISPLAY set but xvfb is not available");
                     }
                 }
             }
@@ -165,13 +164,8 @@ final class LocalRunExecutor {
     // ------------------------------------------------------
 
     private static void downloadBinary(
-            FilePath target,
-            Launcher launcher,
-            String environment,
-            String os,
-            String arch,
-            TaskListener listener
-    ) throws IOException, InterruptedException {
+            FilePath target, Launcher launcher, String environment, String os, String arch, TaskListener listener)
+            throws IOException, InterruptedException {
 
         String platform = resolvePlatform(os, arch);
         String baseUrl = resolveCliBaseUrl(environment);
@@ -200,33 +194,23 @@ final class LocalRunExecutor {
         log(listener, "Download completed");
     }
 
-    private static void chmodIfNeeded(
-            FilePath binary,
-            Launcher launcher,
-            String os,
-            TaskListener listener
-    ) throws IOException, InterruptedException {
+    private static void chmodIfNeeded(FilePath binary, Launcher launcher, String os, TaskListener listener)
+            throws IOException, InterruptedException {
 
         if (os.equals("windows")) {
             return;
         }
 
         log(listener, "Making sedstart executable");
-        launcher.launch()
-                .cmds("chmod", "+x", binary.getRemote())
-                .join();
+        launcher.launch().cmds("chmod", "+x", binary.getRemote()).join();
     }
 
-    private static String detectOs(Launcher launcher, TaskListener listener)
-            throws IOException, InterruptedException {
+    private static String detectOs(Launcher launcher, TaskListener listener) throws IOException, InterruptedException {
 
         ByteArrayOutputStream out = new ByteArrayOutputStream();
-        launcher.launch()
-                .cmds("uname", "-s")
-                .stdout(out)
-                .join();
+        launcher.launch().cmds("uname", "-s").stdout(out).join();
 
-        String os = out.toString().trim().toLowerCase();
+        String os = out.toString(StandardCharsets.UTF_8).trim().toLowerCase();
 
         if (os.contains("darwin")) return "darwin";
         if (os.contains("linux")) return "linux";
@@ -244,12 +228,9 @@ final class LocalRunExecutor {
         }
 
         ByteArrayOutputStream out = new ByteArrayOutputStream();
-        launcher.launch()
-                .cmds("uname", "-m")
-                .stdout(out)
-                .join();
+        launcher.launch().cmds("uname", "-m").stdout(out).join();
 
-        String arch = out.toString().trim().toLowerCase();
+        String arch = out.toString(StandardCharsets.UTF_8).trim().toLowerCase();
         if (arch.contains("arm") || arch.contains("aarch64")) return "arm64";
         if (arch.contains("64")) return "amd64";
         if (arch.contains("86")) return "386";
@@ -260,15 +241,11 @@ final class LocalRunExecutor {
     // ------------------------------------------------------
 
     private static String resolveCliBaseUrl(String env) {
-        return "QA".equalsIgnoreCase(env)
-                ? "http://cli.sedinqa.com/latest"
-                : "http://cli.sedstart.com/latest";
+        return "QA".equalsIgnoreCase(env) ? "http://cli.sedinqa.com/latest" : "http://cli.sedstart.com/latest";
     }
 
     private static String resolveApiUrl(String env) {
-        return "QA".equalsIgnoreCase(env)
-                ? "https://sedstart.sedinqa.com/api"
-                : "https://app.sedstart.com/api";
+        return "QA".equalsIgnoreCase(env) ? "https://sedstart.sedinqa.com/api" : "https://app.sedstart.com/api";
     }
 
     private static boolean hasDisplay(EnvVars env) {
@@ -277,41 +254,29 @@ final class LocalRunExecutor {
     }
 
     private static boolean hasXvfb(Launcher launcher) throws IOException, InterruptedException {
-        int exit = launcher.launch()
-                .cmds("which", "xvfb-run")
-                .join();
+        int exit = launcher.launch().cmds("which", "xvfb-run").join();
         return exit == 0;
     }
 
     private static String resolvePlatform(String os, String arch) throws IOException {
 
         if (os.contains("darwin") || os.contains("mac")) {
-            return arch.contains("arm")
-                    ? "cli_darwin_arm64_v8.0"
-                    : "cli_darwin_amd64_v1";
+            return arch.contains("arm") ? "cli_darwin_arm64_v8.0" : "cli_darwin_amd64_v1";
         }
 
         if (os.contains("linux")) {
-            return arch.contains("arm")
-                    ? "cli_linux_arm64_v8.0"
-                    : "cli_linux_amd64_v1";
+            return arch.contains("arm") ? "cli_linux_arm64_v8.0" : "cli_linux_amd64_v1";
         }
 
         if (os.contains("win")) {
-            return arch.contains("arm")
-                    ? "cli_windows_arm64_v8.0"
-                    : "cli_windows_amd64_v1";
+            return arch.contains("arm") ? "cli_windows_arm64_v8.0" : "cli_windows_amd64_v1";
         }
 
         throw new IOException("Unsupported OS/arch: " + os + " / " + arch);
     }
 
-    private static void validate(
-            Integer projectId,
-            Integer suiteId,
-            Integer testId,
-            Integer profileId
-    ) throws IOException {
+    private static void validate(Integer projectId, Integer suiteId, Integer testId, Integer profileId)
+            throws IOException {
 
         if (projectId == null) {
             throw new IOException("projectId is required");
