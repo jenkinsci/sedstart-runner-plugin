@@ -220,11 +220,6 @@ final class LocalRunExecutor {
     private static String detectOs(Launcher launcher, TaskListener listener)
             throws IOException, InterruptedException {
 
-        log(listener, "Detecting OS");
-        if (!launcher.isUnix()) {
-            return "windows";
-        }
-
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         launcher.launch()
                 .cmds("uname", "-s")
@@ -232,10 +227,12 @@ final class LocalRunExecutor {
                 .join();
 
         String os = out.toString().trim().toLowerCase();
-        if (os.contains("linux")) return "linux";
-        if (os.contains("darwin")) return "darwin";
 
-        throw new IOException("Unsupported OS: " + os);
+        if (os.contains("darwin")) return "darwin";
+        if (os.contains("linux")) return "linux";
+
+        // Fallback only if uname is unavailable
+        return "windows";
     }
 
     private static String detectArch(Launcher launcher, TaskListener listener)
@@ -288,7 +285,7 @@ final class LocalRunExecutor {
 
     private static String resolvePlatform(String os, String arch) throws IOException {
 
-        if (os.contains("mac")) {
+        if (os.contains("darwin") || os.contains("mac")) {
             return arch.contains("arm")
                     ? "cli_darwin_arm64_v8.0"
                     : "cli_darwin_amd64_v1";
