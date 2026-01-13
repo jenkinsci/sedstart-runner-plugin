@@ -80,7 +80,7 @@ final class LocalRunExecutor {
         boolean addHeadlessFlag = false;
 
         // -----------------------------
-        // Headless decision
+        // Execution mode decision
         // -----------------------------
         if (headless) {
             // Headless mode: all OS, no xvfb
@@ -91,16 +91,20 @@ final class LocalRunExecutor {
             log(listener, "Headless disabled → running headed");
 
             if (os.equals("linux")) {
-                if (hasDisplay(env)) {
-                    log(listener, "DISPLAY present → running headed without xvfb");
-                } else if (hasXvfb(launcher)) {
-                    cmd.add("xvfb-run");
-                    cmd.add("-a");
-                    log(listener, "No DISPLAY → using xvfb-run for headed execution");
+                if (!hasDisplay(env)) {
+                    // DISPLAY not set → headed without xvfb
+                    log(listener, "Linux headed mode with no DISPLAY → running without xvfb");
                 } else {
-                    throw new IOException(
-                            "Cannot run headed mode on Linux without DISPLAY and without xvfb installed"
-                    );
+                    // DISPLAY set
+                    if (hasXvfb(launcher)) {
+                        cmd.add("xvfb-run");
+                        cmd.add("-a");
+                        log(listener, "DISPLAY set and xvfb present → using xvfb-run for headed execution");
+                    } else {
+                        throw new IOException(
+                                "Cannot run headed mode on Linux with DISPLAY set but xvfb is not available"
+                        );
+                    }
                 }
             }
         }
