@@ -9,7 +9,7 @@ final class SedStartSseRenderer {
     private static final ObjectMapper MAPPER = new ObjectMapper();
     private final TaskListener listener;
 
-    private  String finalStatus;
+    private String finalStatus;
 
     SedStartSseRenderer(TaskListener listener) {
         this.listener = listener;
@@ -46,7 +46,6 @@ final class SedStartSseRenderer {
                 renderTestStep(step);
             }
         }
-
     }
 
     private void renderTestStep(JsonNode step) {
