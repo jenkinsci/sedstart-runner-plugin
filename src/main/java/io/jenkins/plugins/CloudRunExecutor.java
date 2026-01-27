@@ -106,6 +106,10 @@ final class CloudRunExecutor {
             }
 
             renderer.onComplete();
+
+            if (renderer.isFailed()) {
+                throw new IOException("SedStart Cloud run failed");
+            }
         }
     }
 

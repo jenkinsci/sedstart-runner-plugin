@@ -9,7 +9,7 @@ final class SedStartSseRenderer {
     private static final ObjectMapper MAPPER = new ObjectMapper();
     private final TaskListener listener;
 
-    private String lastTestStatus;
+    private String finalStatus;
 
     SedStartSseRenderer(TaskListener listener) {
         this.listener = listener;
@@ -46,8 +46,6 @@ final class SedStartSseRenderer {
                 renderTestStep(step);
             }
         }
-
-        lastTestStatus = status;
     }
 
     private void renderTestStep(JsonNode step) {
@@ -90,6 +88,9 @@ final class SedStartSseRenderer {
 
         if (!status.isEmpty()) {
             listener.getLogger().println(icon(status) + " " + status);
+            if ("PASS".equalsIgnoreCase(status) || "FAIL".equalsIgnoreCase(status)) {
+                finalStatus = status;
+            }
         }
 
         JsonNode video = run.path("video");
@@ -103,9 +104,15 @@ final class SedStartSseRenderer {
         }
     }
 
+    boolean isFailed() {
+        return "FAIL".equalsIgnoreCase(finalStatus);
+    }
+
     void onComplete() {
-        if ("PASS".equalsIgnoreCase(lastTestStatus)) {
+        if ("PASS".equalsIgnoreCase(finalStatus)) {
             listener.getLogger().println("✅ PASS");
+        } else if ("FAIL".equalsIgnoreCase(finalStatus)) {
+            listener.getLogger().println("❌ FAIL");
         }
     }
 
