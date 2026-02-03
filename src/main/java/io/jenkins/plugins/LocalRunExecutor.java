@@ -155,9 +155,10 @@ final class LocalRunExecutor {
                     "powershell",
                     "-NoProfile",
                     "-NonInteractive",
-                    "-ExecutionPolicy", "Bypass",
-                    "-File", ps1.getRemote()
-            );
+                    "-ExecutionPolicy",
+                    "Bypass",
+                    "-File",
+                    ps1.getRemote());
         }
 
         Launcher.ProcStarter installPs = launcher.launch();
@@ -220,16 +221,14 @@ final class LocalRunExecutor {
 
             runPs.cmds("bash", "-c", cmd);
         } else {
-            String cmd =
-                    "$env:SEDSTART_HOME=\"$Env:USERPROFILE\\.sedstart\"; " +
-                            "cd $env:SEDSTART_HOME; " +
-                            ".\\sedstart.exe run " +
-                            "-b " + env.get("SEDSTART_BROWSER") + " " +
-                            "-p " + projectId + " " +
-                            "-d " + profileId + " " +
-                            (testId != null ? "-t " + testId : "-s " + suiteId) + " " +
-                            (headless ? "-q " : "") +
-                            "-e default.env";
+            String cmd = "$env:SEDSTART_HOME=\"$Env:USERPROFILE\\.sedstart\"; " + "cd $env:SEDSTART_HOME; "
+                    + ".\\sedstart.exe run "
+                    + "-b "
+                    + env.get("SEDSTART_BROWSER") + " " + "-p "
+                    + projectId + " " + "-d "
+                    + profileId + " " + (testId != null ? "-t " + testId : "-s " + suiteId)
+                    + " " + (headless ? "-q " : "")
+                    + "-e default.env";
 
             runPs.cmds("powershell", "-NoProfile", "-NonInteractive", "-Command", cmd);
         }
