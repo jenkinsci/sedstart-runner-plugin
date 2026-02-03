@@ -108,16 +108,18 @@ final class LocalRunExecutor {
             """);
 
         } else {
-            installCmd = List.of("powershell", "-NoProfile", "-NonInteractive", "-Command", """
+            FilePath ps1 = workspace.child("install-sedstart.ps1");
+            ps1.write("""
                 $ErrorActionPreference = "Stop"
 
                 $home = $Env:USERPROFILE
-                $sedstartHome = "$home\\.sedstart"
-                $bin = "$sedstartHome\\sedstart.exe"
+                $sedstartHome = Join-Path $home ".sedstart"
+                $bin = Join-Path $sedstartHome "sedstart.exe"
 
                 New-Item -ItemType Directory -Force $sedstartHome | Out-Null
 
                 $os = "windows"
+
                 if ($Env:PROCESSOR_ARCHITECTURE -match "ARM64") { $arch = "arm64" }
                 elseif ($Env:PROCESSOR_ARCHITECTURE -match "AMD64") { $arch = "amd64" }
                 else { $arch = "386" }
@@ -144,10 +146,19 @@ final class LocalRunExecutor {
                 }
 
                 @(
-                  "url=$api",
+                  "url=$api"
                   "key=$Env:SEDSTART_API_KEY"
-                ) | Set-Content "$sedstartHome\\default.env"
-            """);
+                ) | Set-Content (Join-Path $sedstartHome "default.env")
+            """, "UTF-8");
+
+            installCmd = List.of(
+                    "powershell",
+                    "-NoProfile",
+                    "-NonInteractive",
+                    "-ExecutionPolicy",
+                    "Bypass",
+                    "-File",
+                    ps1.getRemote());
         }
 
         Launcher.ProcStarter installPs = launcher.launch();
@@ -210,14 +221,13 @@ final class LocalRunExecutor {
 
             runPs.cmds("bash", "-c", cmd);
         } else {
-            String cmd = "$env:SEDSTART_HOME=\"$Env:USERPROFILE\\.sedstart\"; "
-                    + "cd $env:SEDSTART_HOME; "
+            String cmd = "$env:SEDSTART_HOME=\"$Env:USERPROFILE\\.sedstart\"; " + "cd $env:SEDSTART_HOME; "
                     + ".\\sedstart.exe run "
-                    + "-b " + env.get("SEDSTART_BROWSER") + " "
-                    + "-p " + projectId + " "
-                    + "-d " + profileId + " "
-                    + (testId != null ? "-t " + testId : "-s " + suiteId) + " "
-                    + (headless ? "-q " : "")
+                    + "-b "
+                    + env.get("SEDSTART_BROWSER") + " " + "-p "
+                    + projectId + " " + "-d "
+                    + profileId + " " + (testId != null ? "-t " + testId : "-s " + suiteId)
+                    + " " + (headless ? "-q " : "")
                     + "-e default.env";
 
             runPs.cmds("powershell", "-NoProfile", "-NonInteractive", "-Command", cmd);
