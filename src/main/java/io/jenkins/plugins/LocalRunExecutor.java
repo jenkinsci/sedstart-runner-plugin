@@ -112,8 +112,8 @@ final class LocalRunExecutor {
             ps1.write("""
                 $ErrorActionPreference = "Stop"
 
-                $home = $Env:USERPROFILE
-                $sedstartHome = Join-Path $home ".sedstart"
+                $userHome = $Env:USERPROFILE
+                $sedstartHome = Join-Path $userHome ".sedstart"
                 $bin = Join-Path $sedstartHome "sedstart.exe"
 
                 New-Item -ItemType Directory -Force $sedstartHome | Out-Null
@@ -221,7 +221,7 @@ final class LocalRunExecutor {
 
             runPs.cmds("bash", "-c", cmd);
         } else {
-            String cmd = "$env:SEDSTART_HOME=\"$Env:USERPROFILE\\.sedstart\"; " + "cd $env:SEDSTART_HOME; "
+            String cmd = "$env:SEDSTART_HOME = Join-Path $Env:USERPROFILE '.sedstart'; " + "cd $env:SEDSTART_HOME; "
                     + ".\\sedstart.exe run "
                     + "-b "
                     + env.get("SEDSTART_BROWSER") + " " + "-p "
