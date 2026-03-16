@@ -55,50 +55,16 @@ final class LocalRunExecutor {
             installCmd = List.of("bash", "-c", """
                 set -euo pipefail
 
-                OS="$(uname -s | tr '[:upper:]' '[:lower:]')"
-                ARCH="$(uname -m)"
-
-                case "$OS" in
-                  linux) PLATFORM_OS=linux ;;
-                  darwin) PLATFORM_OS=darwin ;;
-                  *) echo "Unsupported OS: $OS"; exit 1 ;;
-                esac
-
-                case "$ARCH" in
-                  x86_64|amd64) PLATFORM_ARCH=amd64 ;;
-                  arm64|aarch64) PLATFORM_ARCH=arm64 ;;
-                  i386|i686) PLATFORM_ARCH=386 ;;
-                  *) echo "Unsupported ARCH: $ARCH"; exit 1 ;;
-                esac
-
-                case "$PLATFORM_OS/$PLATFORM_ARCH" in
-                  linux/amd64|darwin/amd64) VARIANT=v1 ;;
-                  linux/arm64|darwin/arm64) VARIANT=v8.0 ;;
-                  linux/386) VARIANT=sse2 ;;
-                  *) echo "No variant for $PLATFORM_OS/$PLATFORM_ARCH"; exit 1 ;;
-                esac
-
+                echo "Installing Sedstart via universal installer"
                 SEDSTART_HOME="$HOME/.sedstart"
-                BIN="$SEDSTART_HOME/sedstart"
-
                 mkdir -p "$SEDSTART_HOME"
 
                 if [ "$SEDSTART_ENV" = "QA" ]; then
-                  BASE_URL="https://cli.sedinqa.com/latest"
+                  curl -fsSL https://raw.githubusercontent.com/sedstart/setup/main/install.sh | bash -s -- --base-url https://cli.sedinqa.com/latest
                   API_URL="https://sedstart.sedinqa.com/api"
                 else
-                  BASE_URL="https://cli.sedstart.com/latest"
+                  curl -fsSL https://raw.githubusercontent.com/sedstart/setup/main/install.sh | bash
                   API_URL="https://app.sedstart.com/api"
-                fi
-
-                URL="$BASE_URL/cli_${PLATFORM_OS}_${PLATFORM_ARCH}_${VARIANT}/sedstart"
-
-                if [ ! -f "$BIN" ]; then
-                  echo "sedstart not found, downloading"
-                  curl -fL "$URL" -o "$BIN"
-                  chmod +x "$BIN"
-                else
-                  echo "sedstart already exists, skipping download"
                 fi
 
                 {
@@ -111,40 +77,21 @@ final class LocalRunExecutor {
             FilePath ps1 = workspace.child("install-sedstart.ps1");
             ps1.write("""
                 $ErrorActionPreference = "Stop"
+                Write-Host "Installing Sedstart via universal installer"
 
                 $userHome = $Env:USERPROFILE
                 $sedstartHome = Join-Path $userHome ".sedstart"
-                $bin = Join-Path $sedstartHome "sedstart.exe"
-
                 New-Item -ItemType Directory -Force $sedstartHome | Out-Null
 
-                $os = "windows"
-
-                if ($Env:PROCESSOR_ARCHITECTURE -match "ARM64") { $arch = "arm64" }
-                elseif ($Env:PROCESSOR_ARCHITECTURE -match "AMD64") { $arch = "amd64" }
-                else { $arch = "386" }
-
-                switch ("$os/$arch") {
-                  "windows/amd64" { $variant = "v1" }
-                  "windows/arm64" { $variant = "v8.0" }
-                  "windows/386"   { $variant = "sse2" }
-                  default { throw "Unsupported $os/$arch" }
-                }
-
                 if ($Env:SEDSTART_ENV -eq "QA") {
-                  $base = "https://cli.sedinqa.com/latest"
+                  iex "& { $(iwr https://raw.githubusercontent.com/sedstart/setup/main/install.ps1 -UseBasicParsing) } -BaseUrl 'https://cli.sedinqa.com/latest'"
                   $api  = "https://sedstart.sedinqa.com/api"
                 } else {
-                  $base = "https://cli.sedstart.com/latest"
+                  iwr https://raw.githubusercontent.com/sedstart/setup/main/install.ps1 -UseBasicParsing | iex
                   $api  = "https://app.sedstart.com/api"
                 }
 
-                $url = "$base/cli_${os}_${arch}_${variant}/sedstart.exe"
-
-                if (!(Test-Path $bin)) {
-                  Invoke-WebRequest -Uri $url -OutFile $bin
-                }
-
+                $env:PATH += ";$env:LOCALAPPDATA\\Programs\\sedstart"
                 @(
                   "url=$api"
                   "key=$Env:SEDSTART_API_KEY"
@@ -189,7 +136,7 @@ final class LocalRunExecutor {
                     +
 
                     // -------- build command --------
-                    "CMD=\"./sedstart run "
+                    "CMD=\"sedstart run "
                     + "-b $BROWSER "
                     + "-p "
                     + projectId + " " + "-d "
@@ -222,7 +169,7 @@ final class LocalRunExecutor {
             runPs.cmds("bash", "-c", cmd);
         } else {
             String cmd = "$env:SEDSTART_HOME = Join-Path $Env:USERPROFILE '.sedstart'; " + "cd $env:SEDSTART_HOME; "
-                    + ".\\sedstart.exe run "
+                    + "sedstart run "
                     + "-b "
                     + env.get("SEDSTART_BROWSER") + " " + "-p "
                     + projectId + " " + "-d "
