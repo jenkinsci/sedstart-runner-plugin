@@ -29,7 +29,7 @@
             </f:entry>
 
             <f:entry title="Profile ID" field="profileId">
-                <f:number clazz="positive-number required"/>
+                <f:number clazz="positive-number"/>
             </f:entry>
 
             <f:entry title="Browser" field="browser">
