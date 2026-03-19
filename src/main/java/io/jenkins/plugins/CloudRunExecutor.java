@@ -123,7 +123,9 @@ final class CloudRunExecutor {
             throws IOException {
 
         if (projectId == null) throw new IOException("projectId is required");
-        if (profileId == null) throw new IOException("profileId is required");
+        if (profileId != null && profileId < 0) {
+            throw new IOException("profileId cannot be negative");
+        }
         if ((suiteId == null && testId == null) || (suiteId != null && testId != null)) {
             throw new IOException("Provide exactly one of suiteId or testId");
         }
@@ -133,7 +135,7 @@ final class CloudRunExecutor {
             Integer suiteId, Integer testId, Integer profileId, String browser, boolean headless) {
         return "{"
                 + (suiteId != null ? "\"suite_id\":" + suiteId + "," : "\"test_id\":" + testId + ",")
-                + "\"profile_id\":" + profileId + ","
+                + ((profileId != null && profileId > 0) ? "\"profile_id\":" + profileId + "," : "")
                 + "\"browser\":\"" + browser + "\","
                 + "\"headless\":" + headless
                 + "}";
