@@ -39,7 +39,9 @@ final class LocalRunExecutor {
         // ----------------------------------------------------
         env.put("SEDSTART_API_KEY", apiKey);
         env.put("SEDSTART_PROJECT_ID", projectId.toString());
-        env.put("SEDSTART_PROFILE_ID", profileId.toString());
+        if (profileId != null && profileId > 0) {
+            env.put("SEDSTART_PROFILE_ID", profileId.toString());
+        }
         env.put("SEDSTART_BROWSER", browser == null ? "chrome" : browser);
         env.put("SEDSTART_HEADLESS", Boolean.toString(headless));
         env.put("SEDSTART_ENV", environment == null ? "PROD" : environment);
@@ -192,8 +194,9 @@ final class LocalRunExecutor {
                     "CMD=\"./sedstart run "
                     + "-b $BROWSER "
                     + "-p "
-                    + projectId + " " + "-d "
-                    + profileId + " " + (testId != null ? "-t " + testId : "-s " + suiteId)
+                    + projectId + " "
+                    + (profileId != null && profileId > 0 ? "-d " + profileId + " " : "")
+                    + (testId != null ? "-t " + testId : "-s " + suiteId)
                     + " " + (headless ? "-q " : "")
                     + "-e default.env\"; "
                     +
@@ -225,8 +228,9 @@ final class LocalRunExecutor {
                     + ".\\sedstart.exe run "
                     + "-b "
                     + env.get("SEDSTART_BROWSER") + " " + "-p "
-                    + projectId + " " + "-d "
-                    + profileId + " " + (testId != null ? "-t " + testId : "-s " + suiteId)
+                    + projectId + " "
+                    + (profileId != null && profileId > 0 ? "-d " + profileId + " " : "")
+                    + (testId != null ? "-t " + testId : "-s " + suiteId)
                     + " " + (headless ? "-q " : "")
                     + "-e default.env";
 
@@ -249,8 +253,8 @@ final class LocalRunExecutor {
         if (projectId == null) {
             throw new IOException("projectId is required");
         }
-        if (profileId == null) {
-            throw new IOException("profileId is required");
+        if (profileId != null && profileId < 0) {
+            throw new IOException("profileId cannot be negative");
         }
         if ((suiteId == null && testId == null) || (suiteId != null && testId != null)) {
             throw new IOException("Provide exactly one of suiteId or testId");
