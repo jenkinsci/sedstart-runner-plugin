@@ -87,7 +87,7 @@ final class LocalRunExecutor {
 
                 if [ "$SEDSTART_ENV" = "QA" ]; then
                   BASE_URL="https://cli.sedinqa.com/latest"
-                  API_URL="https://sedstart.sedinqa.com/api"
+                  API_URL="https://test.app.sedstart.sedinqa.com/api"
                 else
                   BASE_URL="https://cli.sedstart.com/latest"
                   API_URL="https://app.sedstart.com/api"
@@ -135,7 +135,7 @@ final class LocalRunExecutor {
 
                 if ($Env:SEDSTART_ENV -eq "QA") {
                   $base = "https://cli.sedinqa.com/latest"
-                  $api  = "https://sedstart.sedinqa.com/api"
+                  $api  = "https://test.app.sedstart.sedinqa.com/api"
                 } else {
                   $base = "https://cli.sedstart.com/latest"
                   $api  = "https://app.sedstart.com/api"

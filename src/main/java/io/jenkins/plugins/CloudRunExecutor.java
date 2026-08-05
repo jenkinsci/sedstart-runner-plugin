@@ -43,7 +43,7 @@ final class CloudRunExecutor {
         }
 
         String baseUrl =
-                "QA".equalsIgnoreCase(environment) ? "https://sedstart.sedinqa.com" : "https://app.sedstart.com";
+                "QA".equalsIgnoreCase(environment) ? "https://test.app.sedstart.sedinqa.com" : "https://app.sedstart.com";
 
         if (!baseUrl.startsWith("https://")) {
             throw new IOException("Only HTTPS endpoints are allowed");
