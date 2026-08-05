@@ -42,8 +42,9 @@ final class CloudRunExecutor {
             throw new IOException("SEDSTART_API_KEY is not set. Use Jenkins credentials binding.");
         }
 
-        String baseUrl =
-                "QA".equalsIgnoreCase(environment) ? "https://test.app.sedstart.sedinqa.com" : "https://app.sedstart.com";
+        String baseUrl = "QA".equalsIgnoreCase(environment)
+                ? "https://test.app.sedstart.sedinqa.com"
+                : "https://app.sedstart.com";
 
         if (!baseUrl.startsWith("https://")) {
             throw new IOException("Only HTTPS endpoints are allowed");
